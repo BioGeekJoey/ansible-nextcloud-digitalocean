@@ -16,7 +16,22 @@
 - name: Enable HTTPS using a Lets Encrypt certificate
   shell: "printf \"y\\n{{ email }}\\n{{ domain }}\\n\" | /snap/bin/nextcloud.enable-https lets-encrypt"
 
-# This is probably the most fragile part of this setup.
+- name: "(HACK) Leave maintenance mode so user can log in"
+  command: /snap/bin/nextcloud.occ maintenance:mode --off
+
+- name: "(HACK) Open a browser locally to log in"
+  connection: local
+  command: "firefox '{{ domain }}'"
+
+- pause:
+    prompt: "Press enter after you've logged in."
+
+- name: "(HACK) Re-enter maintenance mode"
+  command: /snap/bin/nextcloud.occ maintenance:mode --on
+
+- include_role:
+    name: reboot
+
 # I've so far been unable to find a way to automate this without editing
 # the file directly, which is... unfortunate.
 #
