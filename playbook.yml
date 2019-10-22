@@ -1,8 +1,8 @@
 ---
-- hosts: 127.0.0.1
-  connection: local
+- hosts: all
+  remote_user: root
   vars_files:
-    - /vars/secrets.yml
+    - vars/secrets.yml
   roles:
     - nextcloud
     - reboot
