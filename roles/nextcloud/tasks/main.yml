@@ -2,7 +2,7 @@
   command: /usr/bin/snap install nextcloud
 
 - name: Add administrator account
-  command: "nextcloud.manual-install \"{{ username }}\" \"{{ temporary_password }}\""
+  command: "/snap/bin/nextcloud.manual-install \"{{ username }}\" \"{{ temporary_password }}\""
 
 - name: Enter maintenance mode
   command: /snap/bin/nextcloud.occ maintenance:mode --on
