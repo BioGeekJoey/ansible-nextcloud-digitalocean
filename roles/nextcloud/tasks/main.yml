@@ -14,7 +14,7 @@
   command: "/usr/sbin/ufw allow 80,443/tcp"
 
 - name: Enable HTTPS using a Lets Encrypt certificate
-  command: /snap/bin/nextcloud.enable-https lets-encrypt
+  shell: "printf \"y\\n{{ email }}\\n{{ domain }}\\n\" | /snap/bin/nextcloud.enable-https lets-encrypt"
 
 # This is probably the most fragile part of this setup.
 # I've so far been unable to find a way to automate this without editing
