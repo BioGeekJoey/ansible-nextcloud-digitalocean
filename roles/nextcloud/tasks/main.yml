@@ -1,17 +1,45 @@
-# NEEDED INFORMATION:
-# - domain
-# - username
-# - temporary password? (or a way to generate one and give it to the user)
-# - bucket
-# - region
-# - key
-# - secret
+- name: Install Nextcloud via Snap
+  command: /usr/bin/snap install nextcloud
+
+- name: Add administrator account
+  command: "nextcloud.manual-install \"{{ username }}\" \"{{ temporary_password }}\""
+
+- name: Enter maintenance mode
+  command: /snap/bin/nextcloud.occ maintenance:mode --on
+
+- name: Add trusted domain
+  command: "/snap/bin/nextcloud.occ config:system:set trusted_domains  1 --value=\"{{ domain }}\""
+
+- name: Allow HTTP(S) requests through the firewall
+  command: "/usr/sbin/ufw allow 80,443/tcp"
+
+- name: Enable HTTPS using a Lets Encrypt certificate
+  command: /snap/bin/nextcloud.enable-https lets-encrypt
+
+# This is probably the most fragile part of this setup.
+# I've so far been unable to find a way to automate this without editing
+# the file directly, which is... unfortunate.
 #
-# snap install nextcloud && nextcloud.manual-install "$USERNAME" "$PASSWORD" && nextcloud.occ config:system:set trusted_domains 1 --value="$DOMAIN" && ufw allow 80,443/tcp && nextcloud.enable-https lets-encrypt || exit 1
+# Evaluating the file, modifying the associative array, and dumping it back
+# to the file may work. I suspect this is what nextcloud.occ and such does.
+- name: Configure Nextcloud to use DigitalOcean Spaces
+  blockinfile:
+    path: /var/snap/nextcloud/current/nextcloud/config/config.php
+    insertafter: ","
+    insertbefore: ");"
+    block: |
+      'objectstore' => array (
+        'class' => '\\OC\\Files\\ObjectStore\\S3',
+        'arguments' => array (
+          'bucket' => '{{ bucket }}',
+          'key' => '{{ key }}',
+          'secret' => '{{ secret }}',
+          'hostname' => '{{ region }}.digitaloceanspaces.com',
+          'region' => '{{ region }}',
+          'port' => 443,
+          'use_ssl' => true,
+        ),
+      ),
 
-# nextcloud.occ maintenance:mode --on || exit 1
-
-# sed -i 's/^);$//' $CONFIG_FILE || exit 1
-# printf "'objectstore' => array(\n        'class' => '\\\\OC\\\\Files\\\\ObjectStore\\\\S3',\n        'arguments' => array(\n                'bucket' => '$BUCKET',\n                'key'    => '$KEY',\n                'secret' => '$SECRET',\n                'hostname' => '$REGION.digitaloceanspaces.com',\n                'region' => '$REGION',\n                'port' => 443,\n                'use_ssl' => true,\n),\n),\n);" >> $CONFIG_FILE || exit 1
-
-# nextcloud.occ maintenance:mode --off || exit 1
+- name: Leave maintenance mode
+  command: /snap/bin/nextcloud.occ maintenance:mode --off
