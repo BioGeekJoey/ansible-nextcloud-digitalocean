@@ -25,7 +25,7 @@
 - name: Configure Nextcloud to use DigitalOcean Spaces
   blockinfile:
     path: /var/snap/nextcloud/current/nextcloud/config/config.php
-    insertbefore: ");"
+    insertbefore: "\\);"
     block: |
       'objectstore' => array (
         'class' => '\\OC\\Files\\ObjectStore\\S3',
